@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete, func
 from typing import List
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from app.core.database import get_db
 from app.core.config import settings
@@ -199,4 +199,87 @@ async def get_gti_data_paginated(
         "skip": skip,
         "limit": limit,
         "items": items
+    }
+
+
+@router.get("/chart-data/{well_id}")
+async def get_gti_chart_data(
+    well_id: int,
+    start_seconds: int = 0,
+    duration_seconds: int = 3600,
+    db: AsyncSession = Depends(get_db)
+):
+    """Получить данные для графиков порциями по времени (1 час = 3600 секунд)"""
+    
+    # Получаем первую запись для определения начала отсчёта
+    first_result = await db.execute(
+        select(RawGtiData.timestamp)
+        .where(RawGtiData.well_id == well_id)
+        .order_by(RawGtiData.timestamp)
+        .limit(1)
+    )
+    first_time = first_result.scalar_one_or_none()
+    
+    if not first_time:
+        return {"error": "Нет данных", "items": [], "has_more": False, "total_seconds": 0}
+    
+    # Вычисляем временной диапазон
+    start_time = first_time + timedelta(seconds=start_seconds)
+    end_time = start_time + timedelta(seconds=duration_seconds)
+    
+    # Получаем данные за интервал
+    result = await db.execute(
+        select(RawGtiData)
+        .where(RawGtiData.well_id == well_id)
+        .where(RawGtiData.timestamp >= start_time)
+        .where(RawGtiData.timestamp < end_time)
+        .order_by(RawGtiData.timestamp)
+    )
+    data = result.scalars().all()
+    
+    # Формируем ответ
+    items = []
+    for row in data:
+        sec = (row.timestamp - first_time).total_seconds()
+        items.append({
+            "seconds": sec,
+            "depth_bit": row.depth_bit,
+            "depth_bottom": row.depth_bottom,
+            "block_position": row.block_position,
+            "flow_rate_in": row.flow_rate_in,
+            "pressure_in": row.pressure_in,
+            "weight_on_bit": row.weight_on_bit,
+            "rop": row.rop,
+            "tank_volume_total": row.tank_volume_total,
+            "hookload": row.hookload,
+            "rpm": row.rpm,
+            "torque": row.torque
+        })
+    
+    # Проверяем, есть ли ещё данные
+    next_check = await db.execute(
+        select(RawGtiData.timestamp)
+        .where(RawGtiData.well_id == well_id)
+        .where(RawGtiData.timestamp >= end_time)
+        .limit(1)
+    )
+    has_more = next_check.scalar_one_or_none() is not None
+    
+    # Получаем общую длительность
+    last_result = await db.execute(
+        select(RawGtiData.timestamp)
+        .where(RawGtiData.well_id == well_id)
+        .order_by(RawGtiData.timestamp.desc())
+        .limit(1)
+    )
+    last_time = last_result.scalar_one_or_none()
+    total_seconds = (last_time - first_time).total_seconds() if last_time and first_time else 0
+    
+    return {
+        "start_seconds": start_seconds,
+        "duration_seconds": duration_seconds,
+        "first_time": first_time.isoformat(),
+        "items": items,
+        "has_more": has_more,
+        "total_seconds": total_seconds
     }

@@ -116,4 +116,9 @@ async getTrippingDistribution(wellId: number, depthInterval: number = 50) {
   const res = await fetch(`${API_BASE_URL}/tripping/distribution/${wellId}?depth_interval=${depthInterval}`);
   return res.json();
 },
+// === ГТИ данные для графиков (чарты) ===
+async getGtiChartData(wellId: number, startSeconds: number = 0, durationSeconds: number = 3600) {
+  const res = await fetch(`${API_BASE_URL}/gti/chart-data/${wellId}?start_seconds=${startSeconds}&duration_seconds=${durationSeconds}`);
+  return res.json();
+},
 };

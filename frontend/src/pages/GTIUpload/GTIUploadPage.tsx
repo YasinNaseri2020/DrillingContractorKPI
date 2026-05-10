@@ -10,6 +10,8 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { api } from '../../services/api';
+import ShowChartIcon from '@mui/icons-material/ShowChart';
+import { GTIChartViewer } from '../../components/GTI/GTIChartViewer';
 
 const GTIUploadPage: React.FC = () => {
   const [wells, setWells] = useState<any[]>([]);
@@ -34,6 +36,7 @@ const GTIUploadPage: React.FC = () => {
   const [showDataTable, setShowDataTable] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [processResult, setProcessResult] = useState<any>(null);
+  const [chartViewerOpen, setChartViewerOpen] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -174,7 +177,15 @@ const GTIUploadPage: React.FC = () => {
       // Перезагружаем данные после загрузки
       await loadGtiData(selectedWellId, 0, rowsPerPage);
       setPage(0);
-      
+      // После loadGtiData
+await loadGtiData(selectedWellId, 0, rowsPerPage);
+setPage(0);
+// Принудительно проверяем, что totalRows не 0
+setTimeout(() => {
+  if (totalRows === 0) {
+    console.log('Предупреждение: totalRows = 0 после загрузки');
+  }
+}, 500);
       // Сбрасываем статус обработки
       setExistingData(false);
       setIsProcessed(false);
@@ -320,12 +331,21 @@ const GTIUploadPage: React.FC = () => {
             variant="contained"
             color={isProcessed ? "secondary" : "success"}
             onClick={handleProcessAll}
-            disabled={!selectedWellId || selectedWellId === 0 || totalRows === 0 || isProcessed || processing || uploading}
+            disabled={!selectedWellId || selectedWellId === 0 || isProcessed || processing || uploading}
             startIcon={processing ? <CircularProgress size={20} /> : (isProcessed ? <CheckCircleIcon /> : <PlayArrowIcon />)}
             sx={{ flex: 1 }}
           >
             {processing ? 'Обработка...' : (isProcessed ? '✅ Обработано' : 'Обработать все модули')}
           </Button>
+          <Button
+  variant="outlined"
+  startIcon={<ShowChartIcon />}
+  onClick={() => setChartViewerOpen(true)}
+  disabled={!selectedWellId || selectedWellId === 0}
+  sx={{ flex: 1 }}
+>
+  📊 Просмотр графиков
+</Button>
         </Box>
 
         {error && (
@@ -347,7 +367,7 @@ const GTIUploadPage: React.FC = () => {
         )}
       </Paper>
 
-      {/* Блок просмотра данных */}
+            {/* Блок просмотра данных */}
       {selectedWellId && selectedWellId !== 0 && (
         <Paper sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
@@ -370,43 +390,43 @@ const GTIUploadPage: React.FC = () => {
             ) : (
               <>
                 <Table size="small" sx={{ overflowX: 'auto', minWidth: 1300 }}>
-  <TableHead>
-    <TableRow sx={{ bgcolor: '#f5f5f5' }}>
-      <TableCell>Время</TableCell>
-      <TableCell>Глубина долота (м)</TableCell>
-      <TableCell>Глубина забоя (м)</TableCell>
-      <TableCell>Расход на входе (л/с)</TableCell>
-      <TableCell>Давление на входе (атм)</TableCell>
-      <TableCell>Давление на выходе (атм)</TableCell>
-      <TableCell>Нагрузка на долото (т)</TableCell>
-      <TableCell>Мех. скорость (м/ч)</TableCell>
-      <TableCell>Обороты ВСП (об/мин)</TableCell>
-      <TableCell>Крутящий момент (кН·м)</TableCell>
-      <TableCell>Объем в емкостях (м³)</TableCell>
-      <TableCell>Вес на крюке (т)</TableCell>
-      <TableCell>Положение ТБ (м)</TableCell>
-    </TableRow>
-  </TableHead>
-  <TableBody>
-    {gtiData.map((row) => (
-      <TableRow key={row.id} hover>
-        <TableCell>{formatDateTime(row.timestamp)}</TableCell>
-        <TableCell>{row.depth_bit ?? '-'}</TableCell>
-        <TableCell>{row.depth_bottom ?? '-'}</TableCell>
-        <TableCell>{row.flow_rate_in ?? '-'}</TableCell>
-        <TableCell>{row.pressure_in ?? '-'}</TableCell>
-        <TableCell>{row.pressure_out ?? '-'}</TableCell>
-        <TableCell>{row.weight_on_bit ?? '-'}</TableCell>
-        <TableCell>{row.rop ?? '-'}</TableCell>
-        <TableCell>{row.rpm ?? '-'}</TableCell>
-        <TableCell>{row.torque ?? '-'}</TableCell>
-        <TableCell>{row.tank_volume_total ?? '-'}</TableCell>
-        <TableCell>{row.hookload ?? '-'}</TableCell>
-        <TableCell>{row.block_position ?? '-'}</TableCell>
-      </TableRow>
-    ))}
-  </TableBody>
-</Table>
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: '#f5f5f5' }}>
+                      <TableCell>Время</TableCell>
+                      <TableCell>Глубина долота (м)</TableCell>
+                      <TableCell>Глубина забоя (м)</TableCell>
+                      <TableCell>Расход на входе (л/с)</TableCell>
+                      <TableCell>Давление на входе (атм)</TableCell>
+                      <TableCell>Давление на выходе (атм)</TableCell>
+                      <TableCell>Нагрузка на долото (т)</TableCell>
+                      <TableCell>Мех. скорость (м/ч)</TableCell>
+                      <TableCell>Обороты ВСП (об/мин)</TableCell>
+                      <TableCell>Крутящий момент (кН·м)</TableCell>
+                      <TableCell>Объем в емкостях (м³)</TableCell>
+                      <TableCell>Вес на крюке (т)</TableCell>
+                      <TableCell>Положение ТБ (м)</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {gtiData.map((row) => (
+                      <TableRow key={row.id} hover>
+                        <TableCell>{formatDateTime(row.timestamp)}</TableCell>
+                        <TableCell>{row.depth_bit ?? '-'}</TableCell>
+                        <TableCell>{row.depth_bottom ?? '-'}</TableCell>
+                        <TableCell>{row.flow_rate_in ?? '-'}</TableCell>
+                        <TableCell>{row.pressure_in ?? '-'}</TableCell>
+                        <TableCell>{row.pressure_out ?? '-'}</TableCell>
+                        <TableCell>{row.weight_on_bit ?? '-'}</TableCell>
+                        <TableCell>{row.rop ?? '-'}</TableCell>
+                        <TableCell>{row.rpm ?? '-'}</TableCell>
+                        <TableCell>{row.torque ?? '-'}</TableCell>
+                        <TableCell>{row.tank_volume_total ?? '-'}</TableCell>
+                        <TableCell>{row.hookload ?? '-'}</TableCell>
+                        <TableCell>{row.block_position ?? '-'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
                 <TablePagination
                   rowsPerPageOptions={[25, 50, 100]}
                   component="div"
@@ -422,6 +442,14 @@ const GTIUploadPage: React.FC = () => {
             )}
           </Collapse>
         </Paper>
+      )}
+
+      {/* Модальное окно с графиками — здесь! */}
+      {chartViewerOpen && (
+        <GTIChartViewer
+          wellId={selectedWellId}
+          onClose={() => setChartViewerOpen(false)}
+        />
       )}
     </div>
   );

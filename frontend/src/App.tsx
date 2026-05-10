@@ -11,7 +11,6 @@ import WellsPage from './pages/Wells/WellsPage';
 import GTIUploadPage from './pages/GTIUpload/GTIUploadPage';
 import CirculationDetail from './pages/Analytics/CirculationDetail/CirculationDetail';
 import AnalyticsPage from './pages/Analytics/AnalyticsPage';
-import WellsComparison from './pages/Comparison/WellsComparison';
 import TrippingDetail from './pages/Analytics/TrippingDetail/TrippingDetail';
 
 const App: React.FC = () => {
@@ -42,7 +41,6 @@ const App: React.FC = () => {
           <Route path="/gti" element={<GTIUploadPage />} />
           <Route path='/analytics' element={<AnalyticsPage />} />
           <Route path='/analytics/circulation/:wellId' element={<CirculationDetail />} />
-          <Route path="/comparison" element={<WellsComparison />} />
           <Route path="/" element={<CompaniesPage />} />
           <Route path='/analytics/tripping/:wellId' element={<TrippingDetail />} />
         </Routes>

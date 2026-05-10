@@ -2,7 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import {
   Typography, Grid, Card, CardContent, Box, Chip, LinearProgress,
-  FormControl, InputLabel, Select, MenuItem, Paper, CircularProgress
+  FormControl, InputLabel, Select, MenuItem, Paper, CircularProgress, Button
 } from '@mui/material';
 import { api } from '../../services/api';
 
@@ -29,6 +29,12 @@ const AnalyticsPage: React.FC = () => {
   const [selectedWellInfo, setSelectedWellInfo] = useState<any>(null);
   const [analysis, setAnalysis] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  
+  // Режим циркуляции (сохраняется в localStorage)
+  const [circulationMode, setCirculationMode] = useState<'filters' | 'pagination'>(() => {
+    const saved = localStorage.getItem('circulation_mode');
+    return saved === 'pagination' ? 'pagination' : 'filters';
+  });
 
   useEffect(() => {
     const savedWellId = localStorage.getItem(STORAGE_KEY);
@@ -92,6 +98,7 @@ const AnalyticsPage: React.FC = () => {
     }
     
     if (module.id === 1) {
+      // Режим уже выбран переключателем на карточке
       navigate(`/analytics/circulation/${selectedWellId}`);
     } else if (module.id === 2) {
       navigate(`/analytics/tripping/${selectedWellId}`);
@@ -170,6 +177,48 @@ const AnalyticsPage: React.FC = () => {
                   
                   {module.id === 1 && analysis && (
                     <Box sx={{ mt: 2 }}>
+                      {/* Переключатель режима */}
+                      <Box 
+                        sx={{ 
+                          display: 'flex', 
+                          justifyContent: 'space-between', 
+                          alignItems: 'center',
+                          mb: 1.5,
+                          p: 0.5,
+                          bgcolor: '#f5f5f5',
+                          borderRadius: 2
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Typography variant="caption" color="textSecondary" sx={{ ml: 0.5 }}>
+                          Режим:
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 0.5 }}>
+                          <Button
+                            size="small"
+                            variant={circulationMode === 'filters' ? 'contained' : 'outlined'}
+                            onClick={() => {
+                              setCirculationMode('filters');
+                              localStorage.setItem('circulation_mode', 'filters');
+                            }}
+                            sx={{ fontSize: '0.65rem', py: 0.5, px: 1, minWidth: 70 }}
+                          >
+                            🔍 Фильтры
+                          </Button>
+                          <Button
+                            size="small"
+                            variant={circulationMode === 'pagination' ? 'contained' : 'outlined'}
+                            onClick={() => {
+                              setCirculationMode('pagination');
+                              localStorage.setItem('circulation_mode', 'pagination');
+                            }}
+                            sx={{ fontSize: '0.65rem', py: 0.5, px: 1, minWidth: 70 }}
+                          >
+                            📄 Пагинация
+                          </Button>
+                        </Box>
+                      </Box>
+
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                         <Typography variant="caption">Качество циркуляции</Typography>
                         <Typography variant="caption">
